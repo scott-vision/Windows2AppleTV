@@ -266,6 +266,8 @@ def mirror(
     frames = 0
     started = 0.0
     receiver_closed = False
+    helper_exit_code: int | None = None
+    helper_stderr = b""
     try:
         device_item = select_device(ZeroconfDiscovery().discover(timeout), name)
         selected_display = choose_display(enumerate_displays(), display)
@@ -277,6 +279,7 @@ def mirror(
         native_process = subprocess.Popen(
             [str(helper), "-target", device_item.address, "-port", str(device_item.port), "-code", pin],
             stdin=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
         encoder = H264VideoEncoder(selected_display.width, selected_display.height, fps)
         capture = DxcamVideoCapture(selected_display.index)
@@ -299,7 +302,12 @@ def mirror(
                         native_process.stdin.write(payload)
                         native_process.stdin.flush()
                     except OSError as exc:
-                        if native_process.poll() is not None:
+                        # The pipe can report its broken state before poll()
+                        # observes that the helper has exited (notably on
+                        # Windows), so do not turn a normal remote shutdown
+                        # into a CLI error when the write itself is a broken
+                        # pipe.
+                        if isinstance(exc, BrokenPipeError) or native_process.poll() is not None:
                             receiver_closed = True
                             break
                         raise RuntimeError(f"AirPlay helper input failed: {exc}") from exc
@@ -322,8 +330,17 @@ def mirror(
                 native_process.wait(timeout=3)
             except subprocess.TimeoutExpired:
                 native_process.kill()
+                native_process.wait()
+            helper_exit_code = native_process.returncode
+            if native_process.stderr is not None:
+                helper_stderr = native_process.stderr.read()
     if receiver_closed:
         console.print("AirPlay receiver closed the mirror session.")
+        console.print(f"Native AirPlay helper exit code: {helper_exit_code}")
+        if helper_stderr:
+            diagnostic = helper_stderr.decode(errors="replace").strip()
+            if diagnostic:
+                console.print(f"Native AirPlay helper error: {diagnostic}")
     console.print(f"Frames sent: {frames}")
 
 
