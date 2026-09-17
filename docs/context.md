@@ -113,12 +113,13 @@ The latest frame counts and roughly 32-second duration show that the earlier sho
 Latest pushed commit:
 
 ```text
-56866e4 Avoid Windows vectored frame sends
+The native/source bundle and rebuilt helper are included in the current HEAD
+alongside the prior transport changes.
 ```
 
 The repository includes Python source, hardware-independent tests, `uv.lock`, Windows CI, PowerShell setup/mirror launchers, the runnable helper at `native/pycast-airplay.exe`, and compatibility notes.
 
-The helper is a generated Windows executable based on the LGPL-3.0-or-later AirPlay implementation in the external `doubletake` reference tree used during development. The helper source tree is not currently vendored here; only the tested executable and runtime notes are committed. A fresh laptop needs no Go installation for normal use. Any helper rebuild must be deliberate, then the executable must be tested and committed.
+The helper is a generated Windows executable based on the LGPL-3.0-or-later AirPlay implementation. The relevant native source, `go.mod`, `go.sum`, license, provenance notes, and `native/build-helper.ps1` are now vendored under `native/source/`, so another Codex can inspect and rebuild the exact helper. A fresh laptop needs no Go installation for normal use because the tested executable is committed. Any helper rebuild must be deliberate, then the executable must be tested and committed.
 
 ## Safe next test
 
