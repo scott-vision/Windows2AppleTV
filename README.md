@@ -52,3 +52,5 @@ uv run pytest
 ```
 
 Pairing credentials are stored by the local credential store and must never be committed. Avoid running with debug logging when sharing logs because AirPlay protocol traces can contain session secrets. See [development notes](docs/development.md) and the [compatibility record](docs/compatibility.md).
+
+For a full engineering handoff covering protocol decisions, failed approaches, physical test evidence, and the current unresolved transport issue, see [project context](docs/context.md).
